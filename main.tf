@@ -1,4 +1,4 @@
-terraform { 
+terraform {
   required_version = ">= 1.3.0"
 
   required_providers {
@@ -81,3 +81,8 @@ variable "vm_id" {
 }
 
 resource "azurerm_backup_protected_vm" "vm_backup" {
+  resource_group_name = azurerm_resource_group.backupcode.name
+  recovery_vault_name = azurerm_recovery_services_vault.backup_vault.name
+  source_vm_id        = var.vm_id
+  backup_policy_id    = azurerm_backup_policy_vm.vm_backup_policy.id
+}
