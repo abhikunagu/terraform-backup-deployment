@@ -1,0 +1,36 @@
+name: Deploy to Azure
+
+on:
+  push:
+    branches:
+      - main  # Runs on push to main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Create Resource Group
+      run: |
+        az group create --name myResourceGroup --location eastus
+
+    - name: Deploy Virtual Machine
+      run: |
+        az vm create \
+          --resource-group myResourceGroup \
+          --name myVM \
+          --image UbuntuLTS \
+          --admin-username azureuser \
+          --generate-ssh-keys
+
+    - name: Verify Deployment
+      run: |
+        az vm show --resource-group myResourceGroup --name myVM --query "id" --output tsv
