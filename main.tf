@@ -9,90 +9,19 @@ terraform {
   }
 
   backend "azurerm" {
-    resource_group_name  = "backupcode"
-    storage_account_name = "backupdatastorage1"
-    container_name       = "backup"
-    key                  = "infra/terraform.tfstate"
+    resource_group_name  = "terraform-rg"
+    storage_account_name = "terraformstate123"
+    container_name       = "tfstate"
+    key                  = "terraform.tfstate"
   }
 }
 
 provider "azurerm" {
   features {}
   subscription_id = "fb656642-6401-44d5-9de1-14bda10d53e5"
-
-  # Service principal authentication (use environment variables if running in CI/CD)
-  client_id       = var.client_id
-  client_secret   = var.client_secret
-  tenant_id       = var.tenant_id
 }
 
-# Authentication Variables
-variable "client_id" {}
-variable "client_secret" {}
-variable "tenant_id" {}
-
-# Create Resource Group
-resource "azurerm_resource_group" "backupcode" {
-  name     = "backupcode"
+resource "azurerm_resource_group" "example" {
+  name     = "terraform-rg"
   location = "East US"
-}
-
-# Create Storage Account with a unique name
-resource "random_string" "storage_suffix" {
-  length  = 4
-  special = false
-  upper   = false
-}
-
-resource "azurerm_storage_account" "backup_storage" {
-  name                     = "backup${random_string.storage_suffix.result}"
-  resource_group_name      = azurerm_resource_group.backupcode.name
-  location                 = azurerm_resource_group.backupcode.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-
-  tags = {
-    Environment = "dev"
-  }
-}
-
-# Create Recovery Services Vault
-resource "azurerm_recovery_services_vault" "backup_vault" {
-  name                = "backup-vault"
-  resource_group_name = azurerm_resource_group.backupcode.name
-  location            = azurerm_resource_group.backupcode.location
-  sku                 = "Standard"
-
-  tags = {
-    Environment = "dev"
-  }
-}
-
-# Create VM Backup Policy
-resource "azurerm_backup_policy_vm" "vm_backup_policy" {
-  name                = "daily-vm-backup-policy"
-  resource_group_name = azurerm_resource_group.backupcode.name
-  recovery_vault_name = azurerm_recovery_services_vault.backup_vault.name
-
-  backup {
-    frequency = "Daily"
-    time      = "23:00"
-  }
-
-  retention_daily {
-    count = 7
-  }
-}
-
-# Enable Backup for an Azure VM (Dynamic VM ID)
-variable "vm_id" {
-  description = "The ID of the Azure Virtual Machine to back up"
-  type        = string
-}
-
-resource "azurerm_backup_protected_vm" "vm_backup" {
-  resource_group_name = azurerm_resource_group.backupcode.name
-  recovery_vault_name = azurerm_recovery_services_vault.backup_vault.name
-  source_vm_id        = var.vm_id
-  backup_policy_id    = azurerm_backup_policy_vm.vm_backup_policy.id
 }
