@@ -19,7 +19,17 @@ terraform {
 provider "azurerm" {
   features {}
   subscription_id = "fb656642-6401-44d5-9de1-14bda10d53e5"
+
+  # Service principal authentication (use environment variables if running in CI/CD)
+  client_id       = var.client_id
+  client_secret   = var.client_secret
+  tenant_id       = var.tenant_id
 }
+
+# Authentication Variables
+variable "client_id" {}
+variable "client_secret" {}
+variable "tenant_id" {}
 
 # Create Resource Group
 resource "azurerm_resource_group" "backupcode" {
